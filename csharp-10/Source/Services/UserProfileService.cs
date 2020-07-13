@@ -10,8 +10,11 @@ namespace Codenation.Challenge.Services
 {
     public class UserProfileService : IProfileService
     {
+        CodenationContext dbContext;
+
         public UserProfileService(CodenationContext dbContext)
         {
+            this.dbContext = dbContext;
         }
 
         public Task GetProfileDataAsync(ProfileDataRequestContext context)
@@ -19,6 +22,11 @@ namespace Codenation.Challenge.Services
             var request = context.ValidatedRequest as ValidatedTokenRequest;
             if (request != null)
             {
+                User user = dbContext.Users.FirstOrDefault(userDb => userDb.Email == request.UserName);
+                if (user != null)
+                {
+                    context.AddRequestedClaims(GetUserClaims(user));
+                }
             }
 
             return Task.CompletedTask;
@@ -32,11 +40,16 @@ namespace Codenation.Challenge.Services
 
         public static Claim[] GetUserClaims(User user)
         {
-            return new []
+
+            string role = "User";
+            if (user.Email == "tegglestone9@blog.com")
+                role = "Admin";
+
+
+            return new[]
             {
-                new Claim(ClaimTypes.Name, ""),
-                new Claim(ClaimTypes.Email, ""),
-                new Claim(ClaimTypes.Role, "")
+                new Claim(ClaimTypes.Name, user.Email),
+                new Claim(ClaimTypes.Role, role)
             };
         }
 
